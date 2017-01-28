@@ -1,0 +1,26 @@
+<html>
+<head>
+  <link rel="stylesheet" href="styles.css">
+  <script src="node_modules/systemjs/dist/system.js"></script>
+  <script>
+    System.config({
+      meta: {
+        "/dist/*": {
+          format: "cjs"
+        }
+      }
+    })
+  </script>
+</head>
+<body>
+  <div>
+    <label><input type="checkbox" id="instrument-checkbox"> Measure performance</label>
+  </div>
+  <div id="app"></div>
+  <script>
+    System.import("dist/main.js").then(function(module) {
+      module.main(document.querySelector("#app"), document.querySelector("#instrument-checkbox"));
+    });
+  </script>
+</body>
+</html>

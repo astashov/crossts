@@ -1,0 +1,12 @@
+#!/usr/bin/env node
+
+const path = require("path");
+const process = require("process");
+
+const libPath = path.resolve(__dirname, '../dist/main.js');
+const main = require(libPath);
+
+const files = process.argv.slice(2);
+
+main.main(files);
+

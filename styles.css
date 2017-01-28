@@ -1,0 +1,67 @@
+.project-editor {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.project-editor--body {
+  display: flex;
+  flex-grow: 1;
+  position: relative;
+}
+
+.project-editor--photos {
+  position: relative;
+  width: 30%;
+}
+
+.project-editor--spread {
+  display: flex;
+  flex-grow: 1;
+  flex-direction: column;
+}
+
+.spread {
+  display: flex;
+  width: 100%;
+  height: 100%;
+}
+
+.page {
+  width: 50%;
+}
+
+.page[data-is-selected="true"] {
+  background-color: #EEE;
+}
+
+.photos-listing {
+  width: 100%;
+}
+
+.photos-listing--photos {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+
+.photo {
+  width: 100px;
+  height: 100px;
+  background-size: cover;
+  background-position: center center;
+}
+
+.photo-uploads {
+  background-color: #ffffff;
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+}
+
+.page-item[data-is-selected="true"] {
+  background-color: red;
+}

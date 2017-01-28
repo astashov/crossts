@@ -1,0 +1,23 @@
+{
+  "name": "CrossTS",
+  "version": "0.1.0",
+  "description": "Generates crosshub.json files for CrossHub Chrome Extension",
+  "main": "index.js",
+  "scripts": {
+    "build": "webpack",
+    "watch": "webpack --watch"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^7.0.1",
+    "ts-loader": "^1.3.0",
+    "ts-node": "^1.7.2",
+    "typescript": "^2.1.4",
+    "webpack": "^1.14.0"
+  },
+  "bin": {
+    "crossts": "bin/crossts"
+  }
+}
