@@ -1,5 +1,5 @@
 {
-  "name": "CrossTS",
+  "name": "crossts",
   "version": "0.1.0",
   "description": "Generates crosshub.json files for CrossHub Chrome Extension",
   "main": "index.js",
@@ -7,7 +7,7 @@
     "build": "webpack",
     "watch": "webpack --watch"
   },
-  "author": "",
+  "author": "Anton Astashov",
   "license": "MIT",
   "dependencies": {},
   "devDependencies": {
