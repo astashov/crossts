@@ -30,9 +30,6 @@ function visitNodes(node: ts.Node, file: ts.SourceFile, typeChecker: ts.TypeChec
           line: referenceLineAndOffset.line + 1,
           offset: referenceLineAndOffset.character
         });
-        if (file.fileName.indexOf("src/main.ts") !== -1) {
-          // console.log(syntaxKindToName(node.kind), syntaxKindToName(node.parent.kind), "reference", reference.toString());
-        }
         const declarationName = declarationNode.name;
         let declaration: Declaration;
         if (declarationName != null) {
@@ -50,9 +47,6 @@ function visitNodes(node: ts.Node, file: ts.SourceFile, typeChecker: ts.TypeChec
             length: 0,
             offset: 0
           });
-        }
-        if (file.fileName.indexOf("src/main.ts") !== -1) {
-          // konsole.log(syntaxKindToName(declarationNode.kind), syntaxKindToName(declarationNode.parent.kind), "declaration", declaration.toString());
         }
         parsedData.addReferenceAndDeclaration(reference, declaration);
       }
