@@ -67,7 +67,14 @@ export class ParsedData {
                 line: decl.line,
                 offset: decl.offset,
                 length: decl.length,
-                references: references.map(ref => ({remotePath: `${ref.location.httpPath}#L${ref.line}`}))
+                references: references.map(ref => {
+                  return {
+                    line: ref.line,
+                    offset: ref.offset,
+                    length: ref.length,
+                    remotePath: `${ref.location.httpPath}#L${ref.line}`
+                  };
+                })
               };
             })
       };
