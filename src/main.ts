@@ -1,6 +1,7 @@
 import * as ts from "typescript";
 import * as path from "path";
 import * as process from "process";
+import * as fs from "fs";
 import {ParsedData} from "./parsed_data";
 import {Package} from "./package";
 import {Location} from "./location";
@@ -8,13 +9,30 @@ import {Reference, Declaration, Import} from "./entity";
 
 function visitNodes(node: ts.Node, file: ts.SourceFile, typeChecker: ts.TypeChecker, parsedData: ParsedData = new ParsedData()): ParsedData {
   let symbol: ts.Symbol | null = typeChecker.getSymbolAtLocation(node);
-  if (symbol == null) {
-    try {
+  try {
+    if (symbol == null && node.kind === ts.SyntaxKind.ImportSpecifier) {
+      let parent: ts.Node | undefined = node;
+      while (parent != null && (parent.kind !== ts.SyntaxKind.ImportDeclaration)) {
+        parent = parent.parent;
+      }
+      if (parent != null) {
+        const moduleSpecifier = (parent as ts.ImportDeclaration).moduleSpecifier;
+        const moduleSpecifierSymbol = typeChecker.getSymbolAtLocation(moduleSpecifier);
+        const valueDeclaration = moduleSpecifierSymbol.valueDeclaration!;
+        const valueDeclarationSymbol = typeChecker.getSymbolAtLocation(valueDeclaration) || (valueDeclaration as any).symbol;
+        symbol = (valueDeclarationSymbol.exports || {})[node.getFullText()];
+      }
+    }
+  } catch (_) {
+    symbol = null;
+  }
+  try {
+    if (symbol == null) {
       const type = typeChecker.getTypeAtLocation(node);
       symbol = type ? type.getSymbol() : null;
-    } catch (_) {
-      symbol = null;
     }
+  } catch (_) {
+    symbol = null;
   }
   if (symbol != null && symbol.getDeclarations() != null && symbol.getDeclarations()[0] != null) {
     const declarationNode = symbol.getDeclarations()[0] as ts.Declaration;
@@ -34,9 +52,10 @@ function visitNodes(node: ts.Node, file: ts.SourceFile, typeChecker: ts.TypeChec
         let declaration: Declaration;
         if (declarationName != null) {
           const declarationLineAndOffset = declarationFile.getLineAndCharacterOfPosition(declarationName.getStart());
+          const line = declarationLineAndOffset.line + (declarationPackage.kind === "typings" ? 4 : 1);
           declaration = new Declaration({
             location: Location.build(declarationPackage, declarationFile.fileName),
-            line: declarationLineAndOffset.line + 1,
+            line: line,
             length: declarationName.getEnd() - declarationName.getStart(),
             offset: declarationLineAndOffset.character
           });
@@ -62,7 +81,14 @@ export function main(inputFiles: string | string[]): void {
   }
 
   const input = inputFiles.map(i => path.resolve(path.join(process.cwd(), i)));
-  const program: ts.Program = ts.createProgram(input, {typeRoots: [process.cwd()]});
+  const tsConfigPath = path.join(process.cwd(), "tsconfig.json");
+  let compilerOptions = {};
+  if (fs.existsSync(tsConfigPath)) {
+    const tsConfigJson = JSON.parse(fs.readFileSync(tsConfigPath, "utf-8"));
+    compilerOptions = tsConfigJson["compilerOptions"];
+  }
+  compilerOptions["typeRoots"] = [process.cwd()];
+  const program: ts.Program = ts.createProgram(input, compilerOptions);
   const parsedData = new ParsedData();
   program.getSourceFiles().forEach((file) => {
     visitNodes(file, file, program.getTypeChecker(), parsedData);
@@ -70,7 +96,7 @@ export function main(inputFiles: string | string[]): void {
   console.log(JSON.stringify(parsedData.toJson()));
 }
 
-export function syntaxKindToName(kind: ts.SyntaxKind) {
+export function syntaxKindToName(kind: ts.SyntaxKind): string {
   return (<any>ts).SyntaxKind[kind];
 }
 
