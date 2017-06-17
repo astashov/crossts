@@ -7,7 +7,7 @@ import {Package} from "./package";
 import {Location} from "./location";
 import {Reference, Declaration, Import} from "./entity";
 
-function visitNodes(node: ts.Node, file: ts.SourceFile, typeChecker: ts.TypeChecker, parsedData: ParsedData = new ParsedData()): ParsedData {
+function findReferenceAndDeclaration(node: ts.Node, file: ts.SourceFile, typeChecker: ts.TypeChecker): [Reference, Declaration] | undefined {
   let symbol: ts.Symbol | null = typeChecker.getSymbolAtLocation(node);
   try {
     if (symbol == null && node.kind === ts.SyntaxKind.ImportSpecifier) {
@@ -48,28 +48,42 @@ function visitNodes(node: ts.Node, file: ts.SourceFile, typeChecker: ts.TypeChec
           line: referenceLineAndOffset.line + 1,
           offset: referenceLineAndOffset.character
         });
-        const declarationName = declarationNode.name;
         let declaration: Declaration;
-        if (declarationName != null) {
-          const declarationLineAndOffset = declarationFile.getLineAndCharacterOfPosition(declarationName.getStart());
-          const line = declarationLineAndOffset.line + (declarationPackage.kind === "typings" ? 4 : 1);
-          declaration = new Declaration({
-            location: Location.build(declarationPackage, declarationFile.fileName),
-            line: line,
-            length: declarationName.getEnd() - declarationName.getStart(),
-            offset: declarationLineAndOffset.character
-          });
+        if (declarationNode.kind === ts.SyntaxKind.ImportSpecifier
+            && declarationFile.fileName === file.fileName
+            && findReferenceAndDeclaration(declarationNode, declarationFile, typeChecker)) {
+          declaration = findReferenceAndDeclaration(declarationNode, declarationFile, typeChecker)![1];
         } else {
-          declaration = new Import({
-            location: Location.build(declarationPackage, declarationFile.fileName),
-            line: 0,
-            length: 0,
-            offset: 0
-          });
+          const declarationName = declarationNode.name;
+          if (declarationName != null) {
+            const declarationLineAndOffset = declarationFile.getLineAndCharacterOfPosition(declarationName.getStart());
+            const line = declarationLineAndOffset.line + (declarationPackage.kind === "typings" ? 4 : 1);
+            declaration = new Declaration({
+              location: Location.build(declarationPackage, declarationFile.fileName),
+              line: line,
+              length: declarationName.getEnd() - declarationName.getStart(),
+              offset: declarationLineAndOffset.character
+            });
+          } else {
+            declaration = new Import({
+              location: Location.build(declarationPackage, declarationFile.fileName),
+              line: 0,
+              length: 0,
+              offset: 0
+            });
+          }
         }
-        parsedData.addReferenceAndDeclaration(reference, declaration);
+        return [reference, declaration];
       }
     }
+  }
+}
+
+function visitNodes(node: ts.Node, file: ts.SourceFile, typeChecker: ts.TypeChecker, parsedData: ParsedData = new ParsedData()): ParsedData {
+  const result = findReferenceAndDeclaration(node, file, typeChecker);
+  if (result != null) {
+    const [reference, declaration] = result;
+    parsedData.addReferenceAndDeclaration(reference, declaration);
   }
   ts.forEachChild(node, (n) => { visitNodes(n, file, typeChecker, parsedData); });
   return parsedData;
